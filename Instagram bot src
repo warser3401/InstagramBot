@@ -1,0 +1,104 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from time import sleep
+
+PATH = "C:\Program Files (x86)\chromedriver.exe"
+driver = webdriver.Chrome(PATH)
+
+driver.get("https://instagram.com")
+
+sleep(3)
+
+username = input("Enter your Username ")
+password = input("Enter your Password ")
+#the instagram username you wish to search
+term = "Lashgangtx"
+
+full_list = []
+
+#logs into instagram using user inputted information
+def login(username, password):
+    get_login = driver.find_element_by_name("username")
+    get_pass = driver.find_element_by_name("password")
+    get_login.send_keys(username)
+    get_pass.send_keys(password)
+    login_button = driver.find_element_by_class_name("sqdOP.L3NKy.y3zKF")
+    login_button.click()
+    sleep(7)
+
+
+def search(term):
+    search = driver.find_element_by_class_name("XTCLo.x3qfX")
+    search.send_keys(term)
+    sleep(2)
+    search.send_keys(Keys.ENTER)
+    sleep(1)
+    search.send_keys(Keys.ENTER)
+
+
+def scroll_down():
+    driver.execute_script("window.scrollTo(0, 1000)")
+
+
+def get_names():
+    n = 0
+    #the n in the while loop being how many pictures there are on a given instagram
+    while n < 2:
+        names = []
+        pic = driver.find_elements_by_class_name('v1Nh3.kIKUG._bz0w')[n]
+        pic.click()
+        n += 1
+        sleep(3)
+        # clicks like button
+        try:
+            driver.execute_script('''document.getElementsByClassName('Nm9Fw')[0].lastElementChild.click()''')
+            sleep(2)
+            #instagram dynamically changes the xpath so make sure it is the current version of likes scroll box
+            scroll_box = driver.find_element_by_xpath('/html/body/div[6]/div/div/div[2]')
+            scroll = 0
+            while scroll < 6:  # scroll 6 times
+                links = scroll_box.find_elements_by_tag_name('a')
+                #gets names hidden in the title tag in html
+                for name in links:
+                    if name.get_attribute('title') not in names:
+                        names.append(name.get_attribute('title'))
+                driver.execute_script(
+                    '''document.getElementsByClassName('Igw0E IwRSH eGOV_ vwCYk i0EQd')[0].firstChild.scrollBy(0, 4000);''')
+                sleep(1)
+                scroll += 1
+            store_names(names)
+
+            #finds the xpath of the exit button of the followers list
+            exit = driver.find_element_by_xpath('/html/body/div[6]/div/div/div[1]/div/div[2]/button')
+            exit.click()
+
+            #finds the xpath of the exit button out of the clicked picture
+            exit2 = driver.find_element_by_xpath('/html/body/div[5]/div[3]/button')
+            exit2.click()
+
+            #allows for the program to scroll down after reaching 6 picture elements
+            if n % 6 == 0:
+                if n == 1:
+                    break
+                scroll_down()
+                sleep(1)
+        except:
+            #allows the program to click out if it comes across a video with no usernames to save
+            exit2 = driver.find_element_by_xpath('/html/body/div[5]/div[3]/button')
+            exit2.click()
+
+
+
+#stores into a full list
+def store_names(names):
+    for name in names:
+        full_list.append(names)
+
+
+login(username, password)
+search(term)
+
+sleep(5)
+scroll_down()
+get_names()
+print(len(full_list))
